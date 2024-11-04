@@ -22,8 +22,19 @@ import cv2
 import tkinter as tk
 from tkinter import filedialog
 from PIL import Image, ImageTk
+import tkinter as tk
+import cv2
+from PIL import Image, ImageTk
+import cv2
+import tkinter as tk
+from PIL import Image, ImageTk
 progress_bar = None
 gpath = ""
+uploaded_image_path = None
+image_label = None
+
+
+
 
 def process_images(image_path, output_folder, brightness_range=(0.8, 1.2), contrast_range=(0.9, 1.2), 
                   saturation_range=(0.9, 1.1), max_perspective_warp=0.05, num_variations=100):
@@ -154,7 +165,88 @@ def run_loader():
         progress['value'] = i  # Set the current value of the progress bar to the current step in the loop
         splash_screen.update_idletasks()  # Refresh the splash screen to visually update the progress
 
-# Function to create and show the home screen once the splash screen has finished loading
+
+def start_surveillance():
+    global uploaded_image_path, left_frame, image_label  # Ensure we can access the uploaded image path
+    # Clear the home screen content
+    for widget in home_screen.winfo_children():
+        widget.destroy()
+
+    # Initialize video captures for four cameras
+    cap0 = cv2.VideoCapture(0)
+    cap1 = cv2.VideoCapture(1)
+    cap2 = cv2.VideoCapture(2)
+    cap3 = cv2.VideoCapture(3)
+
+    # Create a main frame to hold left and right sections
+    main_frame = tk.Frame(home_screen, bg="#1e1e1e")
+    main_frame.pack(fill=tk.BOTH, expand=True)
+
+    # Left frame for buttons or controls
+    left_frame = tk.Frame(main_frame, bg="#1e1e1e", width=200)
+    left_frame.pack(side=tk.LEFT, fill=tk.Y, padx=20, pady=20)
+
+    # Right frame for the video feed
+    right_frame = tk.Frame(main_frame, bg="#1e1e1e")
+    right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=20, pady=20)
+    right_frame.pack_propagate(False)
+
+    # Add a "Back to Home" button in the left frame
+    back_button = tk.Button(left_frame, text="Back to Home", command=lambda: back_to_home(cap0, cap1, cap2, cap3), font=("Arial", 12), bg="#e74c3c", fg="white")
+    back_button.pack(pady=10, padx=20)
+
+    # Entry field for the image name
+    global name_entry  # Declare name_entry as global to access it
+    name_entry = tk.Entry(left_frame, font=("Arial", 12))
+    name_entry.pack(pady=(10, 5))  # Add padding for spacing
+
+    # Display the uploaded image in the left frame
+    if uploaded_image_path is not None:
+        display_image(uploaded_image_path)
+
+    # Label to display the combined video feed in the right frame
+    video_label = tk.Label(right_frame)
+    video_label.pack(fill=tk.BOTH, expand=True)
+
+    def update_frame():
+        # Capture frames from each camera
+        ret0, frame0 = cap0.read()
+        ret1, frame1 = cap1.read()
+        ret2, frame2 = cap2.read()
+        ret3, frame3 = cap3.read()
+
+        # Check if frames were captured successfully
+        if ret0 and ret1 and ret2 and ret3:
+            # Stack frames in a 2x2 grid
+            top_row = cv2.hconcat([frame0, frame1])
+            bottom_row = cv2.hconcat([frame2, frame3])
+            combined_frame = cv2.vconcat([top_row, bottom_row])
+
+            # Convert the combined frame to RGB for Tkinter display
+            combined_frame = cv2.cvtColor(combined_frame, cv2.COLOR_BGR2RGB)
+
+            # Convert to ImageTk format
+            img = Image.fromarray(combined_frame)
+            img_tk = ImageTk.PhotoImage(image=img)
+
+            # Update the label with the new image
+            video_label.img_tk = img_tk  # Keep a reference to avoid garbage collection
+            video_label.configure(image=img_tk)
+
+        # Repeat the update every 33 ms (approx. 30 FPS)
+        home_screen.after(33, update_frame)
+
+    # Start the video feed
+    update_frame()
+
+
+def back_to_home(*caps):
+    # Release all video captures
+    for cap in caps:
+        cap.release()
+    # Clear the home screen and reload the home content
+    load_home_content(None)
+
 def show_home_screen():
     # Declare home_screen as a global variable so it can be accessed in other functions
     global home_screen, logo_image  # Include logo_image to be reused
@@ -204,7 +296,7 @@ def load_home_content(logo_image):
         justify="left"
     )
     # Pack description label with padding for spacing from the edges of the window
-    description_label.pack(padx=20, pady=20)
+    description_label.pack(padx=30, pady=30)
 
     # Create a frame to hold the main feature buttons horizontally
     button_frame = tk.Frame(home_screen, bg='#1e1e1e')
@@ -217,11 +309,11 @@ def load_home_content(logo_image):
     button1.pack(side=tk.LEFT, padx=(20, 38), anchor='w')  # Position button on the left, with padding between buttons
 
     # Button for "Surveillance" feature
-    button2 = tk.Button(button_frame, text=" SURVEILLANCE  ", command=lambda: button_action(2), font="Arial 15 bold", padx=20, bg="#f7a014",
+    # Directly call start_surveillance when the button is clicked
+    button2 = tk.Button(button_frame, text=" SURVEILLANCE  ", command=start_surveillance, font="Arial 15 bold", padx=20, bg="#f7a014",
                         fg="white", pady=5, bd=10, highlightthickness=0, activebackground="#091428",
                         activeforeground="#1e1e1e")
-    button2.pack(side=tk.LEFT, padx=(38, 20), anchor='e')  # Position button on the right, with padding between buttons
-
+    button2.pack(side=tk.LEFT, padx=(38, 20), anchor='e')
     # Button for "Generate Dataset" feature, triggers screen change to dataset generation options
     button3 = tk.Button(button_frame, text=" GENERATE DATASET  ", command=show_generate_dataset_screen, font="Arial 15 bold", padx=20, bg="#f7a014",
                         fg="white", pady=5, bd=10, highlightthickness=0, activebackground="#091428",
@@ -241,6 +333,8 @@ global left_frame
 # Declare right_frame as a global variable
 global right_frame
 
+
+
 def show_generate_dataset_screen():
     global left_frame, right_frame  # Declare both left_frame and right_frame as global
 
@@ -252,8 +346,8 @@ def show_generate_dataset_screen():
     main_frame = tk.Frame(home_screen, bg='#1e1e1e')
     main_frame.pack(fill=tk.BOTH, expand=True)
 
-    # Create a left frame for the uploaded image and buttons
-    left_frame = tk.Frame(main_frame, bg='#1e1e1e', width=300)
+    # Create a left frame for the uploaded image and buttons with a border
+    left_frame = tk.Frame(main_frame, bg='#1e1e1e', width=300, bd=2, relief=tk.SUNKEN)  # Added bd and relief
     left_frame.pack(side=tk.LEFT, fill=tk.Y, padx=(10, 5), pady=10)
 
     # Create a right frame for the generated images
@@ -262,30 +356,39 @@ def show_generate_dataset_screen():
 
     # Button to navigate back to the home screen content without closing the window
     back_button = tk.Button(left_frame, text="Back to Home", command=lambda: load_home_content(None), font=("Arial", 12), bg="#e74c3c", fg="white")
-    back_button.pack(pady=10)  # Add padding to space the back button from other elements
+    back_button.pack(pady=(10, 10))  # Add padding to space the back button from other elements
 
     # Display a title for the Generate Dataset screen
     title_label = tk.Label(left_frame, text="Generate Dataset", font=("Arial", 18, "bold"), fg="white", bg='#1e1e1e')
-    title_label.pack(pady=10)  # Add padding to space the title from other elements
+    title_label.pack(pady=(10, 5))  # Add padding to space the title from other elements
 
     # Provide instructions for uploading an image to generate a dataset
     instruction_label = tk.Label(left_frame, text="Please upload an image to generate a dataset.", font=("Arial", 12), fg="white", bg='#1e1e1e')
-    instruction_label.pack(pady=5)  # Add padding to space the instructions from other elements
+    instruction_label.pack(pady=(5, 20))  # Add padding to space the instructions from other elements
+
+    # Label for the entry field
+    name_label = tk.Label(left_frame, text="Enter Image Name:", font=("Arial", 12), fg="white", bg='#1e1e1e')
+    name_label.pack(pady=(20, 5))  # Increased top padding
+
+    # Entry widget for the user to input the image name
+    global name_entry
+    name_entry = tk.Entry(left_frame, font=("Arial", 12))  # Create an entry field for the image name
+    name_entry.pack(pady=(10, 5))  # Add padding for spacing
+
+    # Bind key release event to the function
+    name_entry.bind("<KeyRelease>", on_name_entry_change)  # Bind key release event to the function
 
     # Button to trigger the image upload process
     upload_button = tk.Button(left_frame, text="Upload Image", command=upload_image, font=("Arial", 12), bg="#3e8e41", fg="white")
-    upload_button.pack(pady=20)  # Add padding to space the upload button from other elements
+    upload_button.pack(pady=(20, 10))  # Increased top padding
 
     # Initialize the run button and image label as None, to be created only when needed
     global run_button, image_label
     run_button = None  # Initially no run button present
     image_label = None  # Initially no image label present
 
-    # Entry widget for the user to input the image name
-    global name_entry
-    name_entry = tk.Entry(left_frame, font=("Arial", 12))  # Create an entry field for the image name
-    name_entry.pack(pady=10)  # Add padding for spacing
-    name_entry.bind("<KeyRelease>", on_name_entry_change)  # Bind key release event to the function
+
+
 
 def display_generated_images(output_folder):
     global right_frame  # Access the right_frame variable
@@ -373,7 +476,7 @@ def display_image(file_path):
     global image_label, img, left_frame  # Access the left_frame variable
     # Open the selected image file and resize it for display within the application window
     img = Image.open(file_path)
-    img = img.resize((200, 200), Image.LANCZOS)  # Resize to a larger size for display
+    img = img.resize((250, 300), Image.LANCZOS)  # Resize to a larger size for display
     img = ImageTk.PhotoImage(img)  # Convert the PIL image to a format suitable for Tkinter
 
     # Check if image_label exists (image already displayed) and update it, or create it if not
