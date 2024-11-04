@@ -152,6 +152,153 @@ def navigate_to_home():
     # Calls the function to initialize and display the main home screen
     show_home_screen()
 
+def navigate_to_login():
+    splash_screen.destroy()  # Close the splash screen
+    show_login_screen()  # Open the login screen
+
+import tkinter as tk
+from tkinter import PhotoImage
+
+
+
+
+
+
+
+
+
+
+
+
+import tkinter as tk
+
+class AnimatedGIF:
+    def __init__(self, label, gif_path, resize_factor=2):
+        self.label = label
+        self.gif_path = gif_path
+        self.frames = []
+        self.load_gif(resize_factor)
+        self.current_frame = 0
+        self.animate()
+
+    def load_gif(self, resize_factor):
+        # Load the GIF and create a list of frames
+        try:
+            gif = tk.PhotoImage(file=self.gif_path)
+            # Resize the first frame
+            resized_gif = gif.subsample(resize_factor)
+            self.frames.append(resized_gif)  # Add the first frame
+
+            # Load additional frames
+            for i in range(1, 100):  # Arbitrarily limit to 100 frames
+                gif = tk.PhotoImage(file=self.gif_path, format=f'gif - {i}')
+                resized_gif = gif.subsample(resize_factor)
+                self.frames.append(resized_gif)  # Add each resized frame
+        except tk.TclError:
+            # End of frames reached
+            pass
+
+    def animate(self):
+        # Update the label with the current frame
+        self.label.configure(image=self.frames[self.current_frame])
+        self.current_frame = (self.current_frame + 1) % len(self.frames)  # Loop back to the first frame
+        self.label.after(100, self.animate)  # Adjust the delay as needed (100 ms here)
+
+
+
+# Global variable to keep track of the login screen
+import tkinter as tk
+
+# Global variable to hold the login window instance
+login_screen = None
+
+def show_login_screen():
+    global login_screen
+
+    # If the login screen is already open, just return
+    if login_screen is not None and login_screen.winfo_exists():
+        return
+
+    login_screen = tk.Tk()
+    login_screen.title("Login - Trinetra")
+    login_screen.geometry("600x450")
+
+    # Set background color
+    login_screen.configure(bg='#1e1e1e')
+
+    # Load and display the animated GIF (assuming AnimatedGIF class exists)
+    logo_label = tk.Label(login_screen, bg='#1e1e1e')
+    logo_label.pack(pady=(20, 10))
+
+    animated_gif = AnimatedGIF(logo_label, "eye.gif", resize_factor=2)  # Adjust as needed
+
+    # Frame for the login fields
+    frame = tk.Frame(login_screen, bg='#1e1e1e')
+    frame.pack(pady=(10, 20))
+
+    # Label and Entry for User ID
+    user_label = tk.Label(frame, text="User ID:", font=("Arial", 14), bg='#1e1e1e', fg='white')
+    user_label.grid(row=0, column=0, padx=10, pady=5, sticky='e')
+
+    user_entry = tk.Entry(frame, font=("Arial", 14), width=30)
+    user_entry.grid(row=0, column=1, padx=10, pady=5)
+
+    # Label and Entry for Password
+    password_label = tk.Label(frame, text="Password:", font=("Arial", 14), bg='#1e1e1e', fg='white')
+    password_label.grid(row=1, column=0, padx=10, pady=5, sticky='e')
+
+    password_entry = tk.Entry(frame, show='*', font=("Arial", 14), width=30)
+    password_entry.grid(row=1, column=1, padx=10, pady=5)
+
+    # Login button with a command to validate login
+    login_button = tk.Button(login_screen, text="Login", font=("Arial", 14), command=lambda: validate_login(login_screen, user_entry, password_entry))
+    login_button.pack(pady=(20, 10))
+
+    # Handle window close event
+    login_screen.protocol("WM_DELETE_WINDOW", on_close)
+
+    login_screen.mainloop()
+
+def on_close():
+    global login_screen
+    if login_screen is not None:
+        login_screen.destroy()
+        login_screen = None  # Reset to prevent reopening
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def validate_login(login_screen, user_entry, password_entry):
+    user_id = user_entry.get()
+    password = password_entry.get()
+    # Add your validation logic here
+    print(f"User  ID: {user_id}, Password: {password}")
+
+# Call the function to show the login screen
+
+
+def validate_login(login_screen, user_entry, password_entry):
+    user_id = user_entry.get()
+    password = password_entry.get()
+    
+    # Replace these with actual credentials check
+    if user_id.strip() and password.strip():  # Check for non-empty input
+        login_screen.destroy()  # Close the login screen
+        show_home_screen()  # Open the home screen
+    else:
+        messagebox.showerror("Login Failed", "Invalid User ID or Password")
+
+
 # Function to simulate a loading progress bar on the splash screen
 def run_loader():
     # Set the progress bar's initial value to 0 (empty)
@@ -167,7 +314,7 @@ def run_loader():
 
 
 def start_surveillance():
-    global uploaded_image_path, left_frame, image_label  # Ensure we can access the uploaded image path
+    global left_frame, video_label, train_button  # Ensure we can access the left frame and train button
     # Clear the home screen content
     for widget in home_screen.winfo_children():
         widget.destroy()
@@ -195,18 +342,16 @@ def start_surveillance():
     back_button = tk.Button(left_frame, text="Back to Home", command=lambda: back_to_home(cap0, cap1, cap2, cap3), font=("Arial", 12), bg="#e74c3c", fg="white")
     back_button.pack(pady=10, padx=20)
 
-    # Entry field for the image name
-    global name_entry  # Declare name_entry as global to access it
-    name_entry = tk.Entry(left_frame, font=("Arial", 12))
-    name_entry.pack(pady=(10, 5))  # Add padding for spacing
-
-    # Display the uploaded image in the left frame
-    if uploaded_image_path is not None:
-        display_image(uploaded_image_path)
+    # Button to upload a dataset
+    upload_button = tk.Button(left_frame, text="Upload Dataset", command=upload_dataset, font=("Arial", 12), bg="#3498db", fg="white")
+    upload_button.pack(pady=(10, 5))  # Add padding for spacing
 
     # Label to display the combined video feed in the right frame
     video_label = tk.Label(right_frame)
     video_label.pack(fill=tk.BOTH, expand=True)
+
+    # Initialize the Train button as None
+    train_button = None
 
     def update_frame():
         # Capture frames from each camera
@@ -239,6 +384,29 @@ def start_surveillance():
     # Start the video feed
     update_frame()
 
+train_button = None
+
+def upload_dataset():
+    # Open a file dialog to select a folder containing images
+    folder_path = filedialog.askdirectory(title="Select Folder with Images")
+    if folder_path:
+        # Load the dataset (for demonstration, just print the folder path)
+        print(f"Dataset uploaded: {folder_path}")
+        
+        # Here you can add code to process the uploaded images
+        # For example, you can list the images in the folder
+        image_files = [f for f in os.listdir(folder_path) if f.endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif'))]
+        print(f"Images found: {image_files}")
+
+        # Create and show the Train button
+        global train_button  # Use the global variable to modify it
+        if train_button is None:  # Check if the button does not already exist
+            train_button = tk.Button(left_frame, text="Train Model", command=train_model, font=("Arial", 12), bg="#2ecc71", fg="white")
+            train_button.pack(pady=(10, 5))  # Add padding for spacing
+
+def train_model():
+    # Add your model training code here
+    print("Training the model...")
 
 def back_to_home(*caps):
     # Release all video captures
@@ -449,7 +617,7 @@ def display_generated_images(output_folder):
 def upload_image():
     global uploaded_image_path  # Use the global variable to track the uploaded image
     # Open file dialog to allow the user to select an image file from their computer
-    file_path = filedialog.askopenfilename(filetypes=[("Image Files", ".png;.jpg;*.jpeg")])
+    file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.png;*.jpg;*.jpeg")])
     if file_path:  # If a file was selected (not canceled)
         uploaded_image_path = file_path  # Store the uploaded image path
         print(f"Image uploaded: {uploaded_image_path}")  # Print file path for confirmation
@@ -547,7 +715,7 @@ progress.pack(pady=20)  # Add padding for spacing
 
 # Start the loading animation and transition to the home screen after a delay
 splash_screen.after(100, run_loader)  # Start the loader after a short delay
-splash_screen.after(3500, navigate_to_home)  # Navigate to home after 3.5 seconds
+splash_screen.after(3500, navigate_to_login)  # Navigate to home after 3.5 seconds
 
 # Display the splash screen and begin the application's main event loop
 splash_screen.mainloop()
