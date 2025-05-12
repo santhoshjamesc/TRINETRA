@@ -28,3 +28,7 @@ face detection and verify.py files are imported in recogggg1.py
 
 
 if recognition not working check similarity threshold then check recognized faces folder
+
+
+FOLDER PERSON = output of bim.py
+FOLDER recognized faces = faces that passed first checking and waiting for second checking
