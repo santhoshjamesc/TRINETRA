@@ -20,3 +20,7 @@ recogggg1.py its the main file that handles face recognition and sending email f
 if recognition not working check similarity threshold then check recognized faces folder
 
 FOLDER PERSON = output of bim.py FOLDER recognized faces = faces that passed first checking and waiting for second checking
+
+AFTER INSTALLING NECCESARY LIBRARIES
+
+RUN THE FILE UI2.PY
