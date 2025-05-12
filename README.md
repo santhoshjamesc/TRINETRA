@@ -1,4 +1,4 @@
-TRINETRA
+#TRINETRA
 S7 CSA FACE RECOGNITION AND GENERATION SOFTWARE
 
 download the trained model = https://drive.google.com/drive/folders/1RiOF1c_Z-qF9VWsne_cDagiAFpdfWI_Q?usp=sharing paste it
